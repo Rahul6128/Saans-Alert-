@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Parameters:
+  OpenAQKey: {Type: String, NoEcho: true}
+  Schools: {Type: String}
+  BboxQs: {Type: String, Default: "bbox=76.8,28.4,77.4,28.9"}
+Resources:
+  Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions: [{AttributeName: school, AttributeType: S}, {AttributeName: ts, AttributeType: N}]
+      KeySchema: [{AttributeName: school, KeyType: HASH}, {AttributeName: ts, KeyType: RANGE}]
+  Topic: {Type: AWS::SNS::Topic}
+  Fn:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.lambda_handler
+      Runtime: python3.13
+      Timeout: 30
+      Environment:
+        Variables: {TABLE: !Ref Table, TOPIC: !Ref Topic, OPENAQ_KEY: !Ref OpenAQKey, SCHOOLS: !Ref Schools, BBOX_QS: !Ref BboxQs}
+      Policies: [DynamoDBCrudPolicy: {TableName: !Ref Table}, SNSPublishMessagePolicy: {TopicName: !GetAtt Topic.TopicName}]
+      Events: {Hourly: {Type: Schedule, Properties: {Schedule: rate(1 hour)}}}
+  Web:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: web.lambda_handler
+      Runtime: python3.13
+      Timeout: 15
+      Environment:
+        Variables: {TABLE: !Ref Table, SCHOOLS: !Ref Schools}
+      Policies: [DynamoDBReadPolicy: {TableName: !Ref Table}]
+      FunctionUrlConfig: {AuthType: NONE}
+Outputs:
+  StatusPage: {Value: !GetAtt WebUrl.FunctionUrl}
