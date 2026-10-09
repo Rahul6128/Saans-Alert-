@@ -3,8 +3,6 @@
 Hyperlocal air-quality safety planner for schools. Instead of a bare AQI number, it tells a school
 **whether outdoor PE is safe, for how many minutes, and which hour today is cleanest.**
 
-Built for Environmental Hacks (Track: Air, "School safety on bad days"). Runs on AWS Lambda, DynamoDB, SNS, EventBridge; deployed with AWS SAM.
-
 ## What makes it different from an AQI app
 | Step | What it does |
 |---|---|
